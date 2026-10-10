@@ -1,7 +1,7 @@
 import os, json, re
 try: SBO=re.search(r'url:"(https://[^"]+)"',open('config.js',encoding='utf-8').read()).group(1).rstrip('/')
 except Exception: SBO="https://*.supabase.co"
-BASE="https://YOUR-USERNAME.github.io/shustho-bangla"  # বদলান
+BASE="https://tuhin123633.github.io/SusthoBangla/"  # বদলান
 NAME="সুস্থ বাংলা"; TAG="স্বাস্থ্য জানুন, সচেতন থাকুন।"
 CATS=[("common-diseases","রোগ ও লক্ষণ","সাধারণ রোগ ও লক্ষণ সম্পর্কে প্রাথমিক ধারণা।"),
 ("nutrition","পুষ্টি","সুষম খাদ্য ও স্বাস্থ্যকর খাওয়ার অভ্যাস।"),
