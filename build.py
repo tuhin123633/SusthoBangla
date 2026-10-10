@@ -1,7 +1,8 @@
 import os, json, re
 try: SBO=re.search(r'url:"(https://[^"]+)"',open('config.js',encoding='utf-8').read()).group(1).rstrip('/')
 except Exception: SBO="https://*.supabase.co"
-BASE="https://tuhin123633.github.io/SusthoBangla/"  # বদলান
+BASE="https://tuhin123633.github.io/SusthoBangla"
+BP=re.sub(r"^https?://[^/]+","",BASE)+"/"  # বদলান
 NAME="সুস্থ বাংলা"; TAG="স্বাস্থ্য জানুন, সচেতন থাকুন।"
 CATS=[("common-diseases","রোগ ও লক্ষণ","সাধারণ রোগ ও লক্ষণ সম্পর্কে প্রাথমিক ধারণা।"),
 ("nutrition","পুষ্টি","সুষম খাদ্য ও স্বাস্থ্যকর খাওয়ার অভ্যাস।"),
@@ -43,6 +44,30 @@ from expand import NEW
 for i,a in enumerate(A):
     if a[0] in NEW: A[i]=(a[0],a[1],a[2],a[3],NEW[a[0]],a[5])
 A[5]=A[5][:5]+([A[5][5][0],('NHS: Food labelling terms',NHS+'live-well/eat-well/food-labelling-terms/')],)
+import glob, html as _hh
+def load_md():
+    out=[];ok={c[0] for c in CATS}
+    for f in sorted(glob.glob('content/*.md')):
+        t=open(f,encoding='utf-8').read();m=re.match(r'---\n(.*?)\n---\n(.*)',t,re.S)
+        if not m: continue
+        meta={};refs=[]
+        for l in m.group(1).split('\n'):
+            if l.startswith('- '):
+                n,_,u=l[2:].partition('|');u=u.strip()
+                if u.startswith('https://'): refs.append((_hh.escape(n.strip()),_hh.escape(u)))
+            elif ':' in l:
+                k,_,v=l.partition(':');meta[k.strip()]=v.strip()
+        secs=[];cur=None
+        for l in m.group(2).split('\n'):
+            if l.startswith('## '): cur=[l[3:].strip(),[]];secs.append(cur)
+            elif cur is not None: cur[1].append(l)
+        secs=[(_hh.escape(h),'\n\n'.join(_hh.escape(p.strip()) for p in re.split(r'\n\s*\n','\n'.join(bl).strip()) if p.strip())) for h,bl in secs]
+        s=meta.get('slug','')
+        if re.fullmatch(r'[a-z0-9-]+',s) and meta.get('category') in ok and secs and refs and not any(a[0]==s for a in A):
+            out.append((s,_hh.escape(meta.get('title',s)),meta['category'],_hh.escape(meta.get('summary','')),secs,refs))
+        else: print('বাদ (slug/category/সূত্র দরকার):',f)
+    return out
+A+=load_md()
 cn={c[0]:c[1] for c in CATS}
 BG={"common-diseases":"#0f766e","nutrition":"#16a34a","fitness":"#0369a1","mental-health":"#7c3aed","womens-health":"#db2777","childrens-health":"#f59e0b","lifestyle":"#1e3a8a","prevention":"#0d9488"}
 SH={"common-diseases":'<rect x="50" y="18" width="20" height="44" rx="4" fill="#fff"/><rect x="38" y="30" width="44" height="20" rx="4" fill="#fff"/>',
@@ -61,7 +86,7 @@ def foot(p):
 import html as _html
 ALTS=json.load(open('assets/img/alts.json',encoding='utf-8')) if os.path.exists('assets/img/alts.json') else {}
 def img(s):
-    for e in ('webp','jpg','jpeg','png'):
+    for e in ('webp','jpg','jpeg','png','svg'):
         if os.path.exists(f'assets/img/{s}.{e}'): return f'{s}.{e}'
 def thumb(a,p):
     im=img(a[0])
@@ -86,7 +111,7 @@ w("index.html",head("স্বাস্থ্য তথ্য বাংলায
 for i,a in enumerate(A):
     s,t,c,d,secs,refs=a
     toc="".join(f'<li><a href="#s{j}">{h}</a></li>' for j,(h,_) in enumerate(secs))
-    body="".join(f'<h2 id="s{j}">{h}</h2><p>{x}</p>' for j,(h,x) in enumerate(secs))
+    body="".join(f'<h2 id="s{j}">{h}</h2>{"".join("<p>"+q+"</p>" for q in x.split(chr(10)*2))}' for j,(h,x) in enumerate(secs))
     rel="".join(f'<li><a href="{r[0]}.html">{r[1]}</a></li>' for r in A if r[0]!=s and r[2]==c) or "".join(f'<li><a href="{r[0]}.html">{r[1]}</a></li>' for r in A[:3] if r[0]!=s)
     ld=json.dumps({"@context":"https://schema.org","@type":"BlogPosting","headline":t,"inLanguage":"bn","description":d,"mainEntityOfPage":f"{BASE}/articles/{s}.html"},ensure_ascii=False)
     w(f"articles/{s}.html",head(t,d,"../",f"articles/{s}.html")+f'''<nav class="bc" aria-label="ব্রেডক্রাম্ব"><a href="../index.html">হোম</a> › <a href="../categories/{c}.html">{cn[c]}</a> › {t}</nav><article class="art"><div class="warn" role="note"><strong>খসড়া:</strong> এই নিবন্ধ যোগ্য চিকিৎসা পেশাজীবীর পর্যালোচনা ও সূত্র যাচাইয়ের আগে প্রকাশ করবেন না।</div><h1>{t}</h1>{banner(s,t,c)}<p class="lead">{d}</p><p class="sm">লেখক: সম্পাদকীয় খসড়া (যাচাইকৃত যোগ্যতা নেই) · মেডিকেল রিভিউয়ার: এখনও নেই · প্রকাশ ও হালনাগাদের তারিখ: নির্ধারিত হয়নি · <a href="../editorial-policy.html">সম্পাদকীয় তথ্য</a></p><nav class="toc" aria-label="সূচিপত্র"><h2>সূচিপত্র</h2><ol>{toc}</ol></nav>{body}<h2>মূল কথা</h2><p>{d} ব্যক্তিগত উপসর্গ বা চিকিৎসা নিয়ে সিদ্ধান্তের আগে চিকিৎসকের সঙ্গে কথা বলুন।</p><h2>তথ্যসূত্র</h2><ul>'''+"".join(f'<li><a href="{u}" rel="noopener">{n}</a> (প্রকাশের আগে লিংক ও তথ্য মিলিয়ে নিন)</li>' for n,u in refs)+f'''</ul><div class="warn">এটি সাধারণ শিক্ষামূলক তথ্য; রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়। জরুরি অবস্থায় নিকটস্থ হাসপাতালে যান। <a href="../disclaimer.html">দাবিত্যাগ</a></div><h2>সম্পর্কিত নিবন্ধ</h2><ul>{rel}</ul><!-- AD PLACEHOLDER: অনুমোদনের পর নিজের বিজ্ঞাপন কোড এখানে বসান --></article><script type="application/ld+json">{ld}</script>'''+foot("../"))
@@ -108,7 +133,7 @@ page("post.html","নিবন্ধ",'<div id="postView"><p id="pmsg" class="ms
 page("unsubscribe.html","আনসাবস্ক্রাইব",'<p id="usmsg" class="msg" role="status">লোড হচ্ছে…</p><button id="usgo" type="button" hidden>আনসাবস্ক্রাইব নিশ্চিত করুন</button>')
 for f in ("login.html","account.html","admin.html","unsubscribe.html"):
     t=open(f,encoding="utf-8").read().replace("</head>",'<meta name="robots" content="noindex"></head>',1); open(f,"w",encoding="utf-8").write(t)
-w("404.html",head("পাতা পাওয়া যায়নি","পাতাটি পাওয়া যায়নি।","/","404.html")+'<h1>পাতা পাওয়া যায়নি</h1><p><a href="/index.html">হোমপেজে ফিরুন</a></p>'+foot("/"))
+w("404.html",head("পাতা পাওয়া যায়নি","পাতাটি পাওয়া যায়নি।",BP,"404.html")+'<h1>পাতা পাওয়া যায়নি</h1><p><a href="'+BP+'index.html">হোমপেজে ফিরুন</a></p>'+foot(BP))
 w("assets/articles.js","window.ARTICLES="+json.dumps([{"s":a[0],"t":a[1],"c":a[2],"d":a[3],**({"i":img(a[0])} if img(a[0]) else {})} for a in A],ensure_ascii=False)+";window.CATNAMES="+json.dumps(cn,ensure_ascii=False)+";window.ICONS="+json.dumps({c[0]:ico(c[0]) for c in CATS},ensure_ascii=False)+";")
 w("script.js","""(function(){var b=document.querySelector('.mb'),n=document.getElementById('nav');
 if(b)b.addEventListener('click',function(){var o=n.classList.toggle('open');b.setAttribute('aria-expanded',o)});
@@ -153,6 +178,10 @@ w("README.md","""# সুস্থ বাংলা
 - সব ডাটা-অ্যাক্সেস Supabase RLS দিয়ে সার্ভারে নিয়ন্ত্রিত; অ্যাডমিনের জন্য MFA (aal2) বাধ্যতামূলক।
 - `supabase_setup.sql`-এর শেষে `HARDENING` অংশ (সীমা, রেট-লিমিট ট্রিগার, ন্যূনতম অধিকার) অবশ্যই চালান।
 - Cloudflare Pages ব্যবহার করলে `_headers` ফাইল কাজ করে; GitHub Pages হেডার সেট করতে দেয় না (শুধু `<meta>` CSP থাকে)।
+## নিবন্ধ যোগ করা (content/ ফোল্ডার)
+1. `content/PROMPT.md`-এর প্রম্পট দিয়ে AI-কে লেখা বানাতে বলুন; ফলাফল `content/<স্লাগ>.md` নামে রাখুন (বিষয়ের তালিকা `content/PLAN.md`)।
+2. **প্রতিটি দাবি ও লিংক যাচাই করুন এবং যোগ্য চিকিৎসা পেশাজীবীকে দিয়ে পর্যালোচনা করান।** সূত্র (`- নাম | https://...`) না থাকলে নিবন্ধ বাদ পড়ে।
+3. `python3 gen_images.py` (ছবি, দরকার হলে) তারপর `python3 build.py`; সব পাতা, সূচি, সাইটম্যাপ নিজে তৈরি হবে। তারপর আপলোড করুন।
 ## AdSense
 শুধু আসল, পর্যালোচিত কনটেন্ট হলেই আবেদন করুন; অনুমোদনের গ্যারান্টি নেই। নিবন্ধ পাতায় `AD PLACEHOLDER` কমেন্টে নিজের অনুমোদিত কোড বসাবেন। কোনো ভুয়া publisher ID ব্যবহার করবেন না।
 ## প্রকাশের আগে চেকলিস্ট

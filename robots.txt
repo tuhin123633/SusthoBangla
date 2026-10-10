@@ -4,4 +4,4 @@ Disallow: /account.html
 Disallow: /login.html
 Disallow: /unsubscribe.html
 Allow: /
-Sitemap: https://YOUR-USERNAME.github.io/shustho-bangla/sitemap.xml
+Sitemap: https://tuhin123633.github.io/SusthoBangla/sitemap.xml
