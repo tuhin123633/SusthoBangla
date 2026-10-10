@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /login.html
+Disallow: /unsubscribe.html
+Allow: /
+Sitemap: https://YOUR-USERNAME.github.io/shustho-bangla/sitemap.xml
